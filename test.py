@@ -12,6 +12,11 @@ output_url = '/Users/mac/Desktop/university/CST/1718Spring/6_数字图像处理/
 
 # cv.waitKey(0) # 等待键盘触发事件，释放窗口
 
+def minone(x, y):
+    if x > y:
+        return y
+    return x
+
 def brightness(inputimage, g = 5):
     outputimage = inputimage.copy()
     for i in range(0, len(inputimage)):
@@ -68,31 +73,57 @@ def histogram_equalization(inputimage):
     tmp = 0
     for j in range(0, 256):
         tmp += histo[j]
-        histo[j] = tmp 
+        histo[j] = tmp / total_size
     # building the histo
     for i in range(0, len(inputimage)):
         for j in range(0, len(inputimage[0])):
             for k in range(0, 3):
-                outputimage[i][j][k] = 255 * (histo[inputimage[i][j][k]] / total_size)
+                outputimage[i][j][k] = 255 * histo[inputimage[i][j][k]]
     return outputimage
 
 def histogram_matching(inputimage, matchingimage):
     outputimage = inputimage.copy()
-    total_size = len(matchingimage) * len(matchingimage[0])
-    histo = {}#total
+    total_size1 = len(inputimage) * len(inputimage[0])
+    total_size2 = len(matchingimage) * len(matchingimage[0])
+    histo1 = {}
+    histo2 = {}
+    #for 1
     for i in range(0, 256):
-        histo[i] = 0
-    for i in range(0, len(matchingimage)):
-        for j in range(0, len(matchingimage[0])):
-            histo[int(matchingimage[i][j].sum() / 3)] += 1
-    tmp = 0
-    for j in range(0, 256):
-        tmp += histo[j]
-        histo[j] = tmp
+        histo1[i] = 0
     for i in range(0, len(inputimage)):
         for j in range(0, len(inputimage[0])):
-            for k in range(0, 3):
-                outputimage[i][j][k] = 255 * (histo[inputimage[i][j][k]] / total_size)
+            histo1[int(inputimage[i][j].sum() / 3)] += 1
+    tmp = 0
+    for j in range(0, 256):
+        tmp += histo1[j]
+        histo1[j] = tmp / total_size1
+    #for 2
+    for i in range(0, 256):
+        histo2[i] = 0
+    for i in range(0, len(matchingimage)):
+        for j in range(0, len(matchingimage[0])):
+            histo2[int(matchingimage[i][j].sum() / 3)] += 1
+    tmp = 0
+    for j in range(0, 256):
+        tmp += histo2[j]
+        histo2[j] = tmp / total_size2
+
+    for i in range(0, len(inputimage)):
+        for j in range(0, len(inputimage[0])):
+            gi = (int)(inputimage[i][j].sum() / 3)
+            if gi == 0 or gi == 255:
+                outputimage[i][j] = inputimage[i][j]
+            else:
+                histo_place = 0
+                for gj in range(1, 255):
+                    if histo2[gj] >= histo1[gi] and histo2[gj-1] < histo1[gi]:
+                        histo_place = gj
+                        break
+                #outputimage[i][j] = (histo_place * inputimage[i][j]) / (float)(gi)
+                outputimage[i][j][0] = minone(255, (inputimage[i][j][0] / inputimage[i][j].sum()) * histo_place * 3) 
+                outputimage[i][j][1] = minone(255, (inputimage[i][j][1] / inputimage[i][j].sum()) * histo_place * 3)
+                outputimage[i][j][2] = minone(255, (inputimage[i][j][2] / inputimage[i][j].sum()) * histo_place * 3)
+                #print(outputimage[i][j])
     return outputimage
 
 def saturation(inputimage):
@@ -100,7 +131,7 @@ def saturation(inputimage):
     return 0
 
 def point_processing():
-    # image1 = cv.imread(input_url + '/4.jpg')
+    image1 = cv.imread(input_url + '/4.jpg')
     # output_brigtness1 = brightness(image1, 50)
     # cv.imwrite(output_url + '/4_output_brigtness1.jpg', output_brigtness1)
     # output_brigtness2 = brightness(image1, -50)
@@ -115,9 +146,10 @@ def point_processing():
     # cv.imwrite(output_url + '/4_output_gamma2.jpg', output_gamma2)
     # output_histogram_equalization = histogram_equalization(image1)
     # cv.imwrite(output_url + '/4_output_histogram_equalization.jpg', output_histogram_equalization)
-    # image2 = cv.imread(input_url + '/5.jpg')
-    # output_histogram_matching = histogram_matching(image1, image2)
-    # cv.imwrite(output_url + '/4_output_histogram_matching.jpg', output_histogram_matching)
+    image1 = cv.imread(input_url + '/7.png')
+    image2 = cv.imread(input_url + '/9.jpg')
+    output_histogram_matching = histogram_matching(image1, image2)
+    cv.imwrite(output_url + '/4_output_histogram_matching.jpg', output_histogram_matching)
     # ~~~~~~~~~~~~
     # cv.namedWindow('output1')
     # cv.imshow('output1', output_brigtness2)
@@ -126,5 +158,23 @@ def point_processing():
 
 point_processing()
 
+def image_fusion():
+    #image_fusion
+    pic_url = '/image_fusion'
+    image_src1 = cv.imread(input_url + pic_url + '/test1_src.jpg')
+    image_target1 = cv.imread(input_url + pic_url + '/test1_target.jpg')
+    image_mask1 = cv.imread(input_url + pic_url + '/test1_mask.jpg')
 
+    image_src2 = cv.imread(input_url + pic_url + '/test2_src.png')
+    image_target2 = cv.imread(input_url + pic_url + '/test2_target.png')
+    image_mask2 = cv.imread(input_url + pic_url + '/test2_mask.png')
+    for i in range(0, len(image_src2)):
+        for j in range(0, len(image_src2[0])):
+            if image_mask2[i][j][0] > 50:
+                image_target2[152+i][145+j] = image_src2[i][j]
+    cv.namedWindow('output1')
+    cv.imshow('output1', image_target2)
+    cv.waitKey(0)
+    return 0
 
+image_fusion()

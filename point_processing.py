@@ -1,21 +1,20 @@
 import cv2 as cv  
 import numpy as np
+import matplotlib.pyplot as plt
+import scipy.signal
 
 input_url = '/Users/mac/Desktop/university/CST/1718Spring/6_数字图像处理/hw/1/git/Digital_Image_Processing_Ex1/src/input'
 output_url = '/Users/mac/Desktop/university/CST/1718Spring/6_数字图像处理/hw/1/git/Digital_Image_Processing_Ex1/src/output'
-
-# image = cv.imread('/Users/mac/Desktop/university/CST/1718Spring/6_数字图像处理/hw/1/第一次大作业/face morphing/cruz.png')
-# cv.namedWindow("Image") # 初始化一个名为Image的窗口
-# cv.imshow("Image", image) # 显示图片
-
-# print(image[0][0])
-
-# cv.waitKey(0) # 等待键盘触发事件，释放窗口
 
 def minone(x, y):
     if x > y:
         return y
     return x
+
+def maxone(x, y):
+    if x > y:
+        return x
+    return y
 
 def brightness(inputimage, g = 5):
     outputimage = inputimage.copy()
@@ -54,10 +53,7 @@ def gamma(inputimage, r):
         print('wrong number!!!\n')
         return outputimage
     else:
-        for i in range(0, len(inputimage)):
-            for j in range(0, len(inputimage[0])):
-                for k in range(0, 3):
-                    outputimage[i][j][k] = 255 * (inputimage[i][j][k] / 255) ** (1 / r)
+        outputimage = 255 * (inputimage / 255) ** (1 / r)
     return outputimage
 
 def histogram_equalization(inputimage):
@@ -69,7 +65,6 @@ def histogram_equalization(inputimage):
     for i in range(0, len(inputimage)):
         for j in range(0, len(inputimage[0])):
             histo[int(inputimage[i][j].sum() / 3)] += 1
-            #histo[int((inputimage[i][j][2] * 0.299 + inputimage[i][j][1] * 0.587 + inputimage[i][j][0] * 0.114) / 3)] += 1
     tmp = 0
     for j in range(0, 256):
         tmp += histo[j]
@@ -119,11 +114,9 @@ def histogram_matching(inputimage, matchingimage):
                     if histo2[gj] >= histo1[gi] and histo2[gj-1] < histo1[gi]:
                         histo_place = gj
                         break
-                #outputimage[i][j] = (histo_place * inputimage[i][j]) / (float)(gi)
                 outputimage[i][j][0] = minone(255, (inputimage[i][j][0] / inputimage[i][j].sum()) * histo_place * 3) 
                 outputimage[i][j][1] = minone(255, (inputimage[i][j][1] / inputimage[i][j].sum()) * histo_place * 3)
                 outputimage[i][j][2] = minone(255, (inputimage[i][j][2] / inputimage[i][j].sum()) * histo_place * 3)
-                #print(outputimage[i][j])
     return outputimage
 
 def saturation(inputimage):
@@ -146,10 +139,10 @@ def point_processing():
     # cv.imwrite(output_url + '/4_output_gamma2.jpg', output_gamma2)
     # output_histogram_equalization = histogram_equalization(image1)
     # cv.imwrite(output_url + '/4_output_histogram_equalization.jpg', output_histogram_equalization)
-    image1 = cv.imread(input_url + '/7.png')
-    image2 = cv.imread(input_url + '/9.jpg')
-    output_histogram_matching = histogram_matching(image1, image2)
-    cv.imwrite(output_url + '/4_output_histogram_matching.jpg', output_histogram_matching)
+    # image1 = cv.imread(input_url + '/7.png')
+    # image2 = cv.imread(input_url + '/9.jpg')
+    # output_histogram_matching = histogram_matching(image1, image2)
+    # cv.imwrite(output_url + '/4_output_histogram_matching.jpg', output_histogram_matching)
     # ~~~~~~~~~~~~
     # cv.namedWindow('output1')
     # cv.imshow('output1', output_brigtness2)
@@ -157,24 +150,3 @@ def point_processing():
     return 0
 
 point_processing()
-
-def image_fusion():
-    #image_fusion
-    pic_url = '/image_fusion'
-    image_src1 = cv.imread(input_url + pic_url + '/test1_src.jpg')
-    image_target1 = cv.imread(input_url + pic_url + '/test1_target.jpg')
-    image_mask1 = cv.imread(input_url + pic_url + '/test1_mask.jpg')
-
-    image_src2 = cv.imread(input_url + pic_url + '/test2_src.png')
-    image_target2 = cv.imread(input_url + pic_url + '/test2_target.png')
-    image_mask2 = cv.imread(input_url + pic_url + '/test2_mask.png')
-    for i in range(0, len(image_src2)):
-        for j in range(0, len(image_src2[0])):
-            if image_mask2[i][j][0] > 50:
-                image_target2[152+i][145+j] = image_src2[i][j]
-    cv.namedWindow('output1')
-    cv.imshow('output1', image_target2)
-    cv.waitKey(0)
-    return 0
-
-image_fusion()

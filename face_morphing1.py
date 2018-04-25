@@ -58,7 +58,12 @@ def bounding_rect(points):
             maxy = i[1]
         if i[1] < miny:
             miny = i[1]
-    return [minx, miny, maxx - minx, maxy - miny]
+    result = []
+    result.append(minx)
+    result.append(miny)
+    result.append(maxx - minx)
+    result.append(maxy - miny)
+    return result
 
 def cat_img(img1, ratio1, img2, ratio2):
     img3 = img1 * ratio1 + img2 * ratio2
@@ -87,6 +92,7 @@ def get_feature_points(img, dlibDector, dlibPredictor, with_boundary=True):
 #face_morphing
 def fill_morph(img_target, img_source, triangle1, triangle2):
     img_tmp = np.zeros_like(img_source)
+    #rect1 = bounding_rect(triangle1)
     rect1 = cv.boundingRect(triangle1)
     rect2 = cv.boundingRect(triangle2)
 
@@ -94,8 +100,8 @@ def fill_morph(img_target, img_source, triangle1, triangle2):
     new_tri2 = []
 
     for i in range(0, 3):
-        new_tri1.append(((triangle1[0][i][0] - rect1[0]), (triangle1[0][i][1] - rect1[1])))
-        new_tri2.append(((triangle2[0][i][0] - rect2[0]), (triangle2[0][i][1] - rect2[1])))
+        new_tri1.append(((triangle1[i][0] - rect1[0]), (triangle1[i][1] - rect1[1])))
+        new_tri2.append(((triangle2[i][0] - rect2[0]), (triangle2[i][1] - rect2[1])))
     new_img1 = img_source[rect1[1] : rect1[1] + rect1[3], rect1[0] : rect1[0] + rect1[2]]
     warp_mat = cv.getAffineTransform(np.float32(new_tri1), np.float32(new_tri2))
     new_img2 = cv.warpAffine(new_img1, warp_mat, (rect2[2], rect2[3]), None, flags=cv.INTER_LINEAR, borderMode=cv.BORDER_REFLECT_101)
@@ -146,15 +152,15 @@ def face_morphing(img1, img2, points1, points2, ratio):
     new_img1 = np.zeros_like(img1)
     new_img2 = np.zeros_like(img2)
     for i in range(0, len(triangle_id)):
-        triangle1 = np.float32([[ [points1[triangle_id[i][0]][0], points1[triangle_id[i][0]][1]],
-                                  [points1[triangle_id[i][1]][0], points1[triangle_id[i][1]][1]],
-                                  [points1[triangle_id[i][2]][0], points1[triangle_id[i][2]][1]]]])
-        triangle2 = np.float32([[ [points2[triangle_id[i][0]][0], points2[triangle_id[i][0]][1]],
-                                  [points2[triangle_id[i][1]][0], points2[triangle_id[i][1]][1]],
-                                  [points2[triangle_id[i][2]][0], points2[triangle_id[i][2]][1]]]])
-        triangle3 = np.float32([[ [points3[triangle_id[i][0]][0], points3[triangle_id[i][0]][1]],
-                                  [points3[triangle_id[i][1]][0], points3[triangle_id[i][1]][1]],
-                                  [points3[triangle_id[i][2]][0], points3[triangle_id[i][2]][1]]]])
+        triangle1 = np.float32([[points1[triangle_id[i][0]][0], points1[triangle_id[i][0]][1]],
+                                [points1[triangle_id[i][1]][0], points1[triangle_id[i][1]][1]],
+                                [points1[triangle_id[i][2]][0], points1[triangle_id[i][2]][1]]])
+        triangle2 = np.float32([[points2[triangle_id[i][0]][0], points2[triangle_id[i][0]][1]],
+                                [points2[triangle_id[i][1]][0], points2[triangle_id[i][1]][1]],
+                                [points2[triangle_id[i][2]][0], points2[triangle_id[i][2]][1]]])
+        triangle3 = np.float32([[points3[triangle_id[i][0]][0], points3[triangle_id[i][0]][1]],
+                                [points3[triangle_id[i][1]][0], points3[triangle_id[i][1]][1]],
+                                [points3[triangle_id[i][2]][0], points3[triangle_id[i][2]][1]]])
 
         new_img1 = fill_morph(new_img1, img1, triangle1, triangle3)
         new_img2 = fill_morph(new_img2, img2, triangle2, triangle3)
@@ -190,13 +196,13 @@ if len(points1) == 0 or len(points2) == 0:
 points_array1 = np.array(points1)
 points_array2 = np.array(points2)
 
-#img3 = face_morphing(img1, img2, points_array1, points_array2, 0.5)
-for i in range(1, 6):
-    img3 = face_morphing(img1, img2, points_array1, points_array2, i/6)
-    cv.imwrite(output_url + "/mid" + str(i) + ".png", img3 )
+img3 = face_morphing(img1, img2, points_array1, points_array2, 0.5)
+# for i in range(1, 6):
+#     img3 = face_morphing(img1, img2, points_array1, points_array2, i/6)
+#     cv.imwrite(output_url + "/mid" + str(i) + ".png", img3 )
 
 #标记特征点
 # points = get_feature_points(img2, face_detector, shape_predictor, False)
 # img = mark_points(img2, points)
 
-#cv.imwrite(save_path, img3 )
+cv.imwrite(save_path, img3 )

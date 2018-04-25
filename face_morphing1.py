@@ -22,33 +22,11 @@ def maxone(x, y):
 
 def mark_points(img, points):
     for point in points:
-        img[point[1]][point[0]][0] = 255
-        img[point[1]][point[0]][1] = 0
-        img[point[1]][point[0]][2] = 0
-        img[point[1]+1][point[0]][0] = 255
-        img[point[1]+1][point[0]][1] = 0
-        img[point[1]+1][point[0]][2] = 0
-        img[point[1]-1][point[0]][0] = 255
-        img[point[1]-1][point[0]][1] = 0
-        img[point[1]-1][point[0]][2] = 0
-        img[point[1]][point[0]+1][0] = 255
-        img[point[1]][point[0]+1][1] = 0
-        img[point[1]][point[0]+1][2] = 0
-        img[point[1]][point[0]-1][0] = 255
-        img[point[1]][point[0]-1][1] = 0
-        img[point[1]][point[0]-1][2] = 0
-        img[point[1]+1][point[0]+1][0] = 255
-        img[point[1]+1][point[0]+1][1] = 0
-        img[point[1]+1][point[0]+1][2] = 0
-        img[point[1]+1][point[0]-1][0] = 255
-        img[point[1]+1][point[0]-1][1] = 0
-        img[point[1]+1][point[0]-1][2] = 0
-        img[point[1]-1][point[0]+1][0] = 255
-        img[point[1]-1][point[0]+1][1] = 0
-        img[point[1]-1][point[0]+1][2] = 0
-        img[point[1]-1][point[0]-1][0] = 255
-        img[point[1]-1][point[0]-1][1] = 0
-        img[point[1]-1][point[0]-1][2] = 0
+        for i in range(0, 5):
+            for j in range(0, 5):
+                img[point[1]-2+i][point[0]-2+j][0] = 0
+                img[point[1]-2+i][point[0]-2+j][1] = 0
+                img[point[1]-2+i][point[0]-2+j][2] = 255
     return img
 
 def is_contain(rect, point):
@@ -86,25 +64,24 @@ def cat_img(img1, ratio1, img2, ratio2):
     img3 = img1 * ratio1 + img2 * ratio2
     return img3
 
-def get_feature_points(img, dlibDector, dlibPredictor):
+def get_feature_points(img, dlibDector, dlibPredictor, with_boundary=True):
     dets = dlibDector(img, 1)
-    if len(dets) != 1:
-        print ("Face number is not 1!!!")
-        return []
-    
     shape = dlibPredictor(img, dets[0])
     keyPoints = []
     for i in range(0, shape.num_parts):
         keyPoints.append((shape.part(i).x, shape.part(i).y))
-    imgshape = img.shape
-    keyPoints.append((0, 0))
-    keyPoints.append((0, imgshape[0] - 1))
-    keyPoints.append((0, (imgshape[0] - 1) / 2))
-    keyPoints.append(((imgshape[1] - 1) / 2, 0))
-    keyPoints.append(((imgshape[1] - 1) / 2, imgshape[0] - 1))
-    keyPoints.append((imgshape[1] - 1, 0))
-    keyPoints.append((imgshape[1] - 1, (imgshape[0] - 1) / 2))
-    keyPoints.append((imgshape[1] - 1, imgshape[0] - 1))
+    
+    if with_boundary:
+        imgshape = img.shape
+        keyPoints.append((0, 0))
+        keyPoints.append((0, imgshape[0] - 1))
+        keyPoints.append((0, (imgshape[0] - 1) / 2))
+        keyPoints.append(((imgshape[1] - 1) / 2, 0))
+        keyPoints.append(((imgshape[1] - 1) / 2, imgshape[0] - 1))
+        keyPoints.append((imgshape[1] - 1, 0))
+        keyPoints.append((imgshape[1] - 1, (imgshape[0] - 1) / 2))
+        keyPoints.append((imgshape[1] - 1, imgshape[0] - 1))
+
     return keyPoints
 
 #face_morphing
@@ -138,23 +115,21 @@ def fill_morph(img_target, img_source, triangle1, triangle2):
     img_transpose = np.transpose(np.nonzero(img_target * img_tmp))
     img_target = img_target + img_tmp
     for i in img_transpose:
-        img_target[i[0]][i[1]] = (img_target[i[0]][i[1]] + img_tmp[i[0]][i[1]]) / 2
+        img_target[i[0]][i[1]] = img_target[i[0]][i[1]] / 2 + img_tmp[i[0]][i[1]] / 2
 
     return img_target
 
 def face_morphing(img1, img2, points1, points2, ratio):
     points3 = points1 * ratio + points2 * (1 - ratio)
     points3 = points3.astype("uint32")
-    for i in range(0, len(points3)):
-        points3[i] = (points3[i, 0], points3[i, 1])
 
     imgshape2 = img2.shape
     rect2 = (0, 0, imgshape2[1], imgshape2[0])
     subdiv = cv.Subdiv2D(rect2)
 
     #print(len(points3))
-    for i in points3:
-        subdiv.insert((i[0], i[1]))
+    for i in range(0, len(points3)):
+        subdiv.insert((points3[i][0], points3[i][1]))
     triangles3 = subdiv.getTriangleList()
     triangle_id = []
     for i in triangles3:
@@ -190,6 +165,7 @@ def face_morphing(img1, img2, points1, points2, ratio):
 predictor_path = "shape_predictor_68_face_landmarks.dat"
 face_path1 = input_url + "/hilary.png"
 face_path2 = input_url + "/cruz.png"
+face_path3 = input_url + "/trump.png"
 save_path = output_url + "/test.png"
 face_detector = dlib.get_frontal_face_detector()
 shape_predictor = dlib.shape_predictor(predictor_path)
@@ -214,9 +190,13 @@ if len(points1) == 0 or len(points2) == 0:
 points_array1 = np.array(points1)
 points_array2 = np.array(points2)
 
-img3 = face_morphing(img1, img2, points_array1, points_array2, 0.5)
+#img3 = face_morphing(img1, img2, points_array1, points_array2, 0.5)
+for i in range(1, 6):
+    img3 = face_morphing(img1, img2, points_array1, points_array2, i/6)
+    cv.imwrite(output_url + "/mid" + str(i) + ".png", img3 )
 
 #标记特征点
-#img = mark_points(img, points)
+# points = get_feature_points(img2, face_detector, shape_predictor, False)
+# img = mark_points(img2, points)
 
-cv.imwrite(save_path, img3 )
+#cv.imwrite(save_path, img3 )

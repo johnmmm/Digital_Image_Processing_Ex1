@@ -19,13 +19,17 @@ def maxone(x, y):
 def image_fusion():
     #image_fusion
     pic_url = '/image_fusion'
-    image_src1 = cv.imread(input_url + pic_url + '/test1_src.jpg')
-    image_target1 = cv.imread(input_url + pic_url + '/test1_target.jpg')
-    image_mask1 = cv.imread(input_url + pic_url + '/test1_mask.jpg')
+    image_src2 = cv.imread(input_url + pic_url + '/test1_src.jpg')
+    image_target2 = cv.imread(input_url + pic_url + '/test1_target.jpg')
+    image_mask2 = cv.imread(input_url + pic_url + '/test1_mask.jpg')
 
-    image_src2 = cv.imread(input_url + pic_url + '/test2_src.png')
-    image_target2 = cv.imread(input_url + pic_url + '/test2_target.png')
-    image_mask2 = cv.imread(input_url + pic_url + '/test2_mask.png')
+    # image_src2 = cv.imread(input_url + pic_url + '/test2_src.png')
+    # image_target2 = cv.imread(input_url + pic_url + '/test2_target.png')
+    # image_mask2 = cv.imread(input_url + pic_url + '/test2_mask.png')
+
+    # cv.namedWindow('output1')
+    # cv.imshow('output1', image_target2)
+    # cv.waitKey(0)
 
     #matlab xiefa
     image_mask2_bw = np.zeros((len(image_mask2), len(image_mask2[0])))
@@ -58,16 +62,19 @@ def image_fusion():
     image_src2_g = image_src2_g * image_mask2_bw
     image_src2_r = image_src2_r * image_mask2_bw
     
-    image_ans2_b = poisson_calculate(image_target2_b, 152, 145, image_mask2_bw, image_src2_b)
-    image_ans2_g = poisson_calculate(image_target2_g, 152, 145, image_mask2_bw, image_src2_g)
-    image_ans2_r = poisson_calculate(image_target2_r, 152, 145, image_mask2_bw, image_src2_r)
+    image_ans2_b = poisson_calculate(image_target2_b, 9, 149, image_mask2_bw, image_src2_b)
+    image_ans2_g = poisson_calculate(image_target2_g, 9, 149, image_mask2_bw, image_src2_g)
+    image_ans2_r = poisson_calculate(image_target2_r, 9, 149, image_mask2_bw, image_src2_r)
+    # image_ans2_b = poisson_calculate(image_target2_b, 152, 145, image_mask2_bw, image_src2_b)
+    # image_ans2_g = poisson_calculate(image_target2_g, 152, 145, image_mask2_bw, image_src2_g)
+    # image_ans2_r = poisson_calculate(image_target2_r, 152, 145, image_mask2_bw, image_src2_r)
 
     for i in range(0, len(image_target2)):
         for j in range(0, len(image_target2[0])):
             image_target2[i][j][0] = image_ans2_b[i][j]
             image_target2[i][j][1] = image_ans2_g[i][j]
             image_target2[i][j][2] = image_ans2_r[i][j]
-    cv.imwrite(output_url + '/image_fusion_2.jpg', image_target2)
+    cv.imwrite(output_url + '/image_fusion_1.jpg', image_target2)
 
     return 0
 
@@ -133,10 +140,10 @@ def poisson_calculate(targetimg, target_x, target_y, sourcemask, sourceimg):
             if gauss_targetimg[i, j] != 0:
                 targetimg[target_x+i][target_y+j] = gauss_targetimg[i, j]
 
-    for i in range(0, source_row):
-        for j in range(0, source_col):
-            targetimg[target_x+i][target_y+j] = minone(targetimg[target_x+i][target_y+j], 255)
-            targetimg[target_x+i][target_y+j] = maxone(targetimg[target_x+i][target_y+j], 0)
+    # for i in range(0, source_row):
+    #     for j in range(0, source_col):
+    #         targetimg[target_x+i][target_y+j] = minone(targetimg[target_x+i][target_y+j], 255)
+    #         targetimg[target_x+i][target_y+j] = maxone(targetimg[target_x+i][target_y+j], 0)
 
     return targetimg
 
